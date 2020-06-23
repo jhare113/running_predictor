@@ -262,25 +262,28 @@ races <- activities %>%
                        date == "2019-04-06" |
                        date == "2019-07-04" |
                        date == "2019-10-20" |
-                       date == "2019-11-28") %>% 
-        mutate(race = TRUE)
-not_races <- activities %>%
-        filter(date != "2016-11-20" & 
-                       date != "2017-11-05" &
-                       date != "2018-04-07" &
-                       date != "2018-07-04" &
-                       date != "2018-07-14" & 
-                       date != "2018-08-04" &
-                       date != "2018-10-21" &
-                       date != "2018-11-22" &
-                       date != "2019-03-09" &
-                       date != "2019-04-06" &
-                       date != "2019-07-04" &
-                       date != "2019-10-20" &
-                       date != "2019-11-28") %>%
-        mutate(race = FALSE)
-
-activities <- rbind(races, not_races) %>%
-        arrange(date)
+                       date == "2019-11-28")
+races
 ```
 
+Now let's see how our model does with this much more limited data set. Three out of thirteen races do not include elevation data. When elevation is taken out, distance becomes statistically significant. I'll need to revisit the models above with distance instead of elevation.
+
+```{r race_model}
+
+mod_race_model <- lm(pace ~ date + training + recovery + Distance, 
+                     activities)
+summary(mod_race_model)
+confint(mod_race_model)
+
+races <- races %>% 
+  add_residuals(mod_race_model)
+
+ggplot(races, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+ggplot(races, aes(pace, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point() 
+```
+
+There's not enough residuals to be really confident, but it looks like they're skewed the same as with the larger data set.
