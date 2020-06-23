@@ -246,10 +246,12 @@ If, however, I were only trying to predict race times, I might be able to get a 
 Athlinks has a record of the races I've run during this time frame. There does not seem to be an obvious way to download this data, but it's not a big data set, so I can manually mark the races in my Strava data set. (Strava also has this information but did not include it in their .csv file)
 
 ```{r races}
+
+# I know this is not an elegant solution, but it works
+
 races <- activities %>%
         filter(date == "2016-11-20" | 
                        date == "2017-11-05" |
-                       date == "2017-11-05" | 
                        date == "2018-04-07" |
                        date == "2018-07-04" |
                        date == "2018-07-14" | 
@@ -260,9 +262,25 @@ races <- activities %>%
                        date == "2019-04-06" |
                        date == "2019-07-04" |
                        date == "2019-10-20" |
-                       date == "2019-11-28") %>%
+                       date == "2019-11-28") %>% 
         mutate(race = TRUE)
+not_races <- activities %>%
+        filter(date != "2016-11-20" & 
+                       date != "2017-11-05" &
+                       date != "2018-04-07" &
+                       date != "2018-07-04" &
+                       date != "2018-07-14" & 
+                       date != "2018-08-04" &
+                       date != "2018-10-21" &
+                       date != "2018-11-22" &
+                       date != "2019-03-09" &
+                       date != "2019-04-06" &
+                       date != "2019-07-04" &
+                       date != "2019-10-20" &
+                       date != "2019-11-28") %>%
+        mutate(race = FALSE)
 
-
+activities <- rbind(races, not_races) %>%
+        arrange(date)
 ```
 
