@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+I'd like to see if there are any patterns in my running pace and if so use them to make predictions about my pace in future runs. I have about five years of running data stored in Strava, so I exported this data, deleted some irrelevant, redundant, or personal columns, and will import and clean it up here.
+
+```{r setup}
+
+#Let's start by loading necessary packages
+
+library(tidyverse)
+
+# Import the dataset
+
+activities <- read_csv("activities.csv",
+                       col_types = cols(
+  `Activity ID` = col_double(),
+  `Activity Date` = col_character(),
+  `Activity Name` = col_character(),
+  `Activity Type` = col_character(),
+  `Elapsed Time` = col_double(),
+  Distance = col_double(),
+  Commute = col_logical(),
+  `Moving Time` = col_double(),
+  `Max Speed` = col_double(),
+  `Elevation Gain` = col_double(),
+  `Elevation Loss` = col_double(),
+  `Elevation Low` = col_double(),
+  `Elevation High` = col_double(),
+  `Max Grade` = col_double(),
+  `Average Grade` = col_double()
+                                )
+                       )
+
+# I'm only intersted in running for now, so I'm going to filter out any other activities (which I haven't recorded as consistently)
+
+activities <- activities %>%
+        filter(`Activity Type` == "Run")
+
+```
+
+```{r}
+head(activities)
+
+tail(activities)
+```
+
+So we're left with 708 runs recorded betwwn July 17, 2015 and July 19, 2020. Some of the columns that might contribute to my speed include "Activity Date" (how old I was), "Distance," and "Elevation Gain." I could also estimate how well trained I was at any particular moment (say, how much I had run in the previous twelve weeks), and my recovery status (say, how much I had run in the previous two days). 
+
+
