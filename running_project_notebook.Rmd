@@ -11,6 +11,7 @@ I'd like to see if there are any patterns in my running pace and if so use them 
 
 library(tidyverse)
 library(lubridate)
+library(zoo)
 
 # Import the dataset
 
@@ -39,7 +40,6 @@ activities <- read_csv("activities.csv",
 activities <- activities %>%
         filter(`Activity Type` == "Run") %>%
         mutate(date = as_date(mdy_hms(`Activity Date`)))
-
 ```
 
 ```{r head_and_tail}
@@ -48,7 +48,7 @@ head(activities)
 tail(activities)
 ```
 
-So we're left with 708 runs recorded betwwn July 17, 2015 and June 19, 2020. Some of the columns that might contribute to my speed include "Activity Date" (how old I was), "Distance," and "Elevation Gain." I could also estimate how well trained I was at any particular moment (say, how much I had run in the previous twelve weeks), and my recovery status (say, how much I had run in the previous two days). 
+So we're left with 708 runs recorded between July 17, 2015 and June 19, 2020. Some of the columns that might contribute to my speed include "Activity Date" (how old I was), "Distance," and "Elevation Gain." I could also estimate how well trained I was at any particular moment (say, how much I had run in the previous twelve weeks), and my recovery status (say, how much I had run in the previous two days). 
 
 Let's start by looking at my pace over time to see if any patterns leap out.
 
@@ -101,6 +101,7 @@ ggplot(activities, mapping = aes(x = date, y = pace)) +
         geom_point() +
         geom_abline(slope = 0.03355, intercept = -211.19030)
 ```
+
 I've definitely been getting slower over the past five years, but is it just the passage of time or are their other explanations?
 
 Distance seems like it would be an important factor for pace. Let's take a look:
@@ -115,21 +116,122 @@ ggplot(activities, mapping = aes(x = Distance, y = pace)) +
         geom_abline(slope = 0.5395, intercept = 373.0588)
 
 ```
+
 Distance certainly makes a difference, but not as much as I might have thought. The three longest runs are marathons, which means I was well-trained and ready to race.
 
 Let's consider elevation gain:
+
 ```{r elevation_model}
 
-mod_elevation <- lm(pace ~ `Elevation Gain`, activities)
+activities <- activities %>%
+        rename(elevation_gain = `Elevation Gain`)
+mod_elevation <- lm(pace ~ elevation_gain, activities)
 mod_elevation
 anova(mod_elevation)
-ggplot(activities, mapping = aes(x = `Elevation Gain`, y = pace)) +
+ggplot(activities, mapping = aes(x = elevation_gain, y = pace)) +
         geom_point() +
         geom_abline(slope = 0.1613, intercept = 361.6337)
 
 ```
+
 It looks like elevation makes a difference.
 
+Now let's consider my training prior to any particular run. To do this I'll first need to calculate my total distance during the twelve weeks prior to any particular run.
 
+```{r training_model}
+activities <- activities %>%
+        complete(date = seq.Date(min(date), max(date), by="day")) %>%
+        mutate(training = rollapply(Distance, 84, sum, align = "right", 
+                                    partial = TRUE, na.rm = TRUE))
 
+mod_training <- lm(pace ~ training, activities)
+mod_training
+anova(mod_training)
+ggplot(activities, mapping = aes(x = training, y = pace)) +
+        geom_point() +
+        geom_abline(slope = -.03572, intercept = 387.30978)
+```
 
+So my pace does seem to drop with increased training, but maybe not as drastically as I would hope. Let's see what recovery days do to my pace.
+
+```{r recovery_model}
+activities <- activities %>%
+        mutate(recovery = rollapply(Distance, 2, sum, align = "right", 
+                                    partial = TRUE, na.rm = TRUE))
+
+mod_recovery <- lm(pace ~ recovery, activities)
+mod_recovery
+anova(mod_recovery)
+ggplot(activities, mapping = aes(x = recovery, y = pace)) +
+        geom_point() +
+        geom_abline(slope = 0.6692, intercept = 370.5318)
+```
+
+So the more I ran in the previous two days, the slower I run on any given day, just as I would expect.
+
+So on their own, each of the variables considered above seems significant. Let's put them together and see what we get. But first let's see if date still retains as much explanatory power when interacting with other variables. I have a hunch that variations in training matter much more than aging over this time frame.
+
+```{r interrogating_date}
+mod_training_date <- lm(pace ~ training + date, activities)
+mod_training_date
+anova(mod_training_date)
+```
+
+That does not seem to be the case. Maybe I'm running longer distances over time. Could that explain it? Let's make a plot.
+
+```{r distance_vs_date}
+ggplot(activities, mapping = aes(x = date, y = Distance)) +
+        geom_point() +
+        geom_smooth()
+```
+
+Well, you can really see where I trained for and ran three marathons, but there does not seem to be a strong pattern of increasing or decreasing distance over this period.
+
+```{r first_overall_model}
+mod_overall1 <- lm(pace ~ date + training + recovery + elevation_gain + 
+                          Distance, activities)
+mod_overall1
+anova(mod_overall1)
+```
+
+So the farther I go, the faster I go? That doesn't feel right to me, nor is the result statistically significant. I suspect that if I exclude the outliers (three marathons), we'll get a more meaningful result, but first let's retry this model with distance excluded.
+
+```{r second_overall_model}
+mod_overall2 <- lm(pace ~ date + training + recovery + elevation_gain, 
+                   activities)
+mod_overall2
+anova(mod_overall2)
+```
+ 
+ Okay, now let's revisit the distance model with the marathons removed.
+ 
+```{r second_distance_model}
+no_marathons <- activities %>%
+        filter(Distance < 40)
+mod_distance2 <- lm(pace ~ Distance, no_marathons)
+mod_distance2
+anova(mod_distance)
+ggplot(no_marathons, mapping = aes(x = Distance, y = pace)) +
+        geom_point() +
+        geom_abline(slope = 0.6475, intercept = 372.2565)
+```
+ 
+ That made a difference, but maybe not as much as I expected. Let's see if our overall model behaves more like we would expect it to using this filtered data set.
+ 
+```{r third_overall_model}
+mod_overall3 <- lm(pace ~ date + training + recovery + elevation_gain + 
+                          Distance, no_marathons)
+mod_overall3
+anova(mod_overall3)
+```
+ 
+The results for Distance are still operating in the opposite direction from what I would expect and without statistical significance. There may just be too much noise around this variable. Many short runs are recovery runs. Many longer runs are races.
+
+So far it seems like the second overall model provides the best tool for predicting pace. Let's return to the model and take a moment to evaluate its quality. 
+
+```{r final_overall_model}
+mod_overall <- lm(pace ~ date + training + recovery + elevation_gain, 
+                   activities)
+mod_overall
+anova(mod_overall)
+```
