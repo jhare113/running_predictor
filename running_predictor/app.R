@@ -33,7 +33,7 @@ server <- function(input, output) {
         race_pace <- 342.06054 + (2.808069 * as.numeric(input$distance)) - 
             (0.17157 * as.numeric(input$training))
         
-        paste("Predicted race pace:", round(race_pace, 1), "secs/km")
+        paste("Predicted race pace:", round(race_pace, 0), "secs/km")
         
     })
 }
