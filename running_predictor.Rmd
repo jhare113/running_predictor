@@ -1,9 +1,7 @@
 ---
 title: "Running Predictor"
-author: "James P. Hare"
 date: "June 24, 2020"
-output:
-  github_document: default
+output: github_document
 ---
 
 ```{r setup, include=FALSE}

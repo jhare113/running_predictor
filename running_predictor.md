@@ -1,6 +1,5 @@
 Running Predictor
 ================
-James P. Hare
 June 24, 2020
 
 ## The Model
