@@ -49,7 +49,7 @@ library(zoo)
 ``` r
 library(modelr)
 
-# Import the dataset
+# Import the data set
 
 activities <- read_csv("activities.csv",
                        col_types = cols(
@@ -71,7 +71,7 @@ activities <- read_csv("activities.csv",
                                 )
                        )
 
-# I'm only intersted in running for now, so I'm going to filter out any other activities (which I haven't recorded as consistently)
+# I'm only interested in running for now, so I'm going to filter out any other activities (which I haven't recorded as consistently)
 
 activities <- activities %>%
         filter(`Activity Type` == "Run") %>%
@@ -961,7 +961,7 @@ high degree of confidence in this model It seems to be most precise for
 paces around 375 seconds per kilometer and less precise for slower and
 faster paces.
 
-Finally, let’s revisit the race model, now taking season into accout.
+Finally, let’s revisit the race model, now taking season into account.
 
 ``` r
 races <- races %>%
@@ -1041,44 +1041,44 @@ Oddly in this case, adding season reduced the predictive power of the
 model. What if I take out season and recovery, which is pretty
 consistent from race to race? And let’s also try removing date and
 elevation per kilometer since they don’t seem to be contributing much?
-And the amount of training and the length of a race are related to each
-other, so let’s take that into account as well.
+The amount of training and the length of a race are related to each
+other, so I tried incorporating their intersection as well, but that
+reduced the precision of the model without adding much in the way of
+explanation of variability.
 
 ``` r
-mod_final_race_2 <- lm(pace ~ Distance * training, races)
+mod_final_race_2 <- lm(pace ~ Distance + training, races)
 summary(mod_final_race_2)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = pace ~ Distance * training, data = races)
+    ## lm(formula = pace ~ Distance + training, data = races)
     ## 
     ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -25.5821  -4.4076  -0.7528   8.6510  13.6402 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -20.537  -7.097   1.153  10.061  20.001 
     ## 
     ## Coefficients:
-    ##                     Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)       312.114902  19.331110  16.146 5.94e-08 ***
-    ## Distance            4.823973   1.172822   4.113  0.00262 ** 
-    ## training           -0.097230   0.051327  -1.894  0.09071 .  
-    ## Distance:training  -0.004651   0.002619  -1.775  0.10955    
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 342.06054   10.41302  32.849 1.61e-11 ***
+    ## Distance      2.80869    0.32545   8.630 6.02e-06 ***
+    ## training     -0.17157    0.03272  -5.243 0.000377 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 12.08 on 9 degrees of freedom
-    ## Multiple R-squared:  0.9167, Adjusted R-squared:  0.8889 
-    ## F-statistic: 33.02 on 3 and 9 DF,  p-value: 3.47e-05
+    ## Residual standard error: 13.32 on 10 degrees of freedom
+    ## Multiple R-squared:  0.8875, Adjusted R-squared:  0.865 
+    ## F-statistic: 39.46 on 2 and 10 DF,  p-value: 1.8e-05
 
 ``` r
 confint(mod_final_race_2)
 ```
 
-    ##                          2.5 %       97.5 %
-    ## (Intercept)       268.38489316 3.558449e+02
-    ## Distance            2.17086559 7.477081e+00
-    ## training           -0.21334099 1.888032e-02
-    ## Distance:training  -0.01057647 1.274802e-03
+    ##                   2.5 %       97.5 %
+    ## (Intercept) 318.8588806 365.26219053
+    ## Distance      2.0835409   3.53383942
+    ## training     -0.2444886  -0.09866009
 
 ``` r
 races <- races %>% 
@@ -1099,5 +1099,5 @@ ggplot(races, aes(pace, resid)) +
 ![](running_project_notebook_files/figure-gfm/final_race_model_2-2.png)<!-- -->
 
 It seems to be that a simple model taking into account only race
-distance,the number of kilometers I trained, and their intersection with
-each other has the most explanatory power.
+distance,the number of kilometers I trained has the most explanatory
+power.

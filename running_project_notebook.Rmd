@@ -1,8 +1,8 @@
 ---
 title: "Running Project Notebook"
 output:
-  html_notebook: default
   github_document: default
+  html_notebook: default
 ---
 
 I'd like to see if there are any patterns in my running pace and if so use them to make predictions about my pace in future runs. I have about five years of running data stored in Strava, so I exported this data, deleted some irrelevant, redundant, or personal columns, and will import and clean it up here.
@@ -16,7 +16,7 @@ library(lubridate)
 library(zoo)
 library(modelr)
 
-# Import the dataset
+# Import the data set
 
 activities <- read_csv("activities.csv",
                        col_types = cols(
@@ -38,7 +38,7 @@ activities <- read_csv("activities.csv",
                                 )
                        )
 
-# I'm only intersted in running for now, so I'm going to filter out any other activities (which I haven't recorded as consistently)
+# I'm only interested in running for now, so I'm going to filter out any other activities (which I haven't recorded as consistently)
 
 activities <- activities %>%
         filter(`Activity Type` == "Run") %>%
@@ -361,7 +361,7 @@ ggplot(activities, aes(pace, resid)) +
 
 There's still a lot of variability to be explained (other factors include weather and my own effort), but I think we can have a fairly high degree of confidence in this model It seems to be most precise for paces around 375 seconds per kilometer and less precise for slower and faster paces.
 
-Finally, let's revisit the race model, now taking season into accout.
+Finally, let's revisit the race model, now taking season into account.
 
 ```{r final_race_model}
 
