@@ -1,6 +1,8 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Running Project Notebook"
+output:
+  html_notebook: default
+  github_document: default
 ---
 
 I'd like to see if there are any patterns in my running pace and if so use them to make predictions about my pace in future runs. I have about five years of running data stored in Strava, so I exported this data, deleted some irrelevant, redundant, or personal columns, and will import and clean it up here.
@@ -262,8 +264,30 @@ races <- activities %>%
                        date == "2019-04-06" |
                        date == "2019-07-04" |
                        date == "2019-10-20" |
-                       date == "2019-11-28")
+                       date == "2019-11-28") %>%
+  mutate(race = TRUE)
 races
+
+activities <- activities %>%
+  filter(date == "2016-11-20" | 
+                       date != "2017-11-05" |
+                       date != "2018-04-07" |
+                       date != "2018-07-04" |
+                       date != "2018-07-14" | 
+                       date != "2018-08-04" |
+                       date != "2018-10-21" |
+                       date != "2018-11-22" |
+                       date != "2019-03-09" |
+                       date != "2019-04-06" |
+                       date != "2019-07-04" |
+                       date != "2019-10-20" |
+                       date != "2019-11-28") %>%
+  mutate(race = FALSE)
+
+activities <- rbind(activities, races) %>%
+  arrange(date)
+
+
 ```
 
 Now let's see how our model does with this much more limited data set. Three out of thirteen races do not include elevation data. When elevation is taken out, distance becomes statistically significant. I'll need to revisit the models above with distance instead of elevation.
@@ -271,7 +295,7 @@ Now let's see how our model does with this much more limited data set. Three out
 ```{r race_model}
 
 mod_race_model <- lm(pace ~ date + training + recovery + Distance, 
-                     activities)
+                     races)
 summary(mod_race_model)
 confint(mod_race_model)
 
@@ -286,4 +310,99 @@ ggplot(races, aes(pace, resid)) +
   geom_point() 
 ```
 
-There's not enough residuals to be really confident, but it looks like they're skewed the same as with the larger data set.
+There's not enough residuals to be really confident, but they don't seem to be skewed like the larger data set's residuals were. Unfortunately the only statistically significant coefficient is training. Elevation gain is obviously correlated with distance, but if we calculate elevation gain per kilometer then we might get another usable variable.  
+
+```{r race_model_2}
+
+races <- races %>%
+  mutate(elevation_per_km = elevation_gain / Distance)
+
+mod_race_model_2 <- lm(pace ~ date + training + recovery + Distance 
+                       + elevation_per_km, races)
+summary(mod_race_model_2)
+confint(mod_race_model_2)
+
+races <- races %>% 
+  add_residuals(mod_race_model_2)
+
+ggplot(races, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+ggplot(races, aes(pace, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point() 
+```
+
+So here, training and distance are the only statistically significant coefficients. Let's try applying this model to the full data set. Since we know which runs are races now, let's incorporate this variable as well. After playing around I bit with months and seasons as proxies for the weather, I landed on simply specifying whether or not it's summer.
+
+```{r final_overall_model_2}
+
+activities <- activities %>%
+  mutate(elevation_per_km = elevation_gain / Distance) %>%
+  mutate(month = month(date)) %>%
+  mutate(summer = ifelse(month == 6 | month == 7 | month == 8, 
+                         TRUE, FALSE))
+
+mod_overall_model_2 <- lm(pace ~ date + training + recovery + Distance 
+                       + elevation_per_km + race + summer, activities)
+summary(mod_overall_model_2)
+confint(mod_overall_model_2)
+
+activities <- activities %>% 
+  add_residuals(mod_overall_model_2)
+
+ggplot(activities, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+ggplot(activities, aes(pace, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point() 
+```
+
+There's still a lot of variability to be explained (other factors include weather and my own effort), but I think we can have a fairly high degree of confidence in this model It seems to be most precise for paces around 375 seconds per kilometer and less precise for slower and faster paces.
+
+Finally, let's revisit the race model, now taking season into accout.
+
+```{r final_race_model}
+
+races <- races %>%
+  mutate(month = month(date)) %>%
+  mutate(summer = ifelse(month == 6 | month == 7 | month == 8, 
+                         TRUE, FALSE))
+
+mod_final_race <- lm(pace ~ date + training + recovery + Distance 
+                       + elevation_per_km + summer, races)
+summary(mod_final_race)
+confint(mod_final_race)
+
+races <- races %>% 
+  add_residuals(mod_final_race)
+
+ggplot(races, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+ggplot(races, aes(pace, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point() 
+```
+
+Oddly in this case, adding season reduced the predictive power of the model. What if I take out season and recovery, which is pretty consistent from race to race? And let's also try removing date and elevation per kilometer since they don't seem to be contributing much? The amount of training and the length of a race are related to each other, so I tried incorporating their intersection as well, but that reduced the precision of the model without adding much in the way of explanation of variability.
+
+```{r final_race_model_2}
+
+mod_final_race_2 <- lm(pace ~ Distance + training, races)
+summary(mod_final_race_2)
+confint(mod_final_race_2)
+
+races <- races %>% 
+  add_residuals(mod_final_race_2)
+
+ggplot(races, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+ggplot(races, aes(pace, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point() 
+```
+
+It seems to be that a simple model taking into account only race distance,the number of kilometers I trained has the most explanatory power.
