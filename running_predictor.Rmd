@@ -1,0 +1,127 @@
+---
+title: "Running Predictor"
+author: "James P. Hare"
+date: "June 24, 2020"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  github_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Load necessary packages
+
+library(tidyverse)
+library(lubridate)
+library(zoo)
+library(modelr)
+
+# Import the dataset
+
+activities <- read_csv("activities.csv",
+                       col_types = cols(
+  `Activity ID` = col_double(),
+  `Activity Date` = col_character(),
+  `Activity Name` = col_character(),
+  `Activity Type` = col_character(),
+  `Elapsed Time` = col_double(),
+  Distance = col_double(),
+  Commute = col_logical(),
+  `Moving Time` = col_double(),
+  `Max Speed` = col_double(),
+  `Elevation Gain` = col_double(),
+  `Elevation Loss` = col_double(),
+  `Elevation Low` = col_double(),
+  `Elevation High` = col_double(),
+  `Max Grade` = col_double(),
+  `Average Grade` = col_double()
+                                )
+                       )
+
+# Clean the data
+
+activities <- activities %>%
+        filter(`Activity Type` == "Run") %>%
+        mutate(date = mdy_hms(`Activity Date`)) %>%
+        mutate(date = with_tz(date, "America/New_York")) %>%
+        mutate(date = as_date(date)) %>%
+        mutate(pace = `Moving Time` / Distance) %>%
+        filter(pace > 200) %>%
+        filter(Distance > 2) %>%
+        complete(date = seq.Date(min(date), max(date), by="day")) %>%
+        mutate(training = rollapply(Distance, width = list(-85:-1), sum, 
+                                    align = "right", partial = TRUE, 
+                                    na.rm = TRUE, fill = 0))
+
+# Separate out and mark races
+
+races <- activities %>%
+        filter(date == "2016-11-20" | 
+                       date == "2017-11-05" |
+                       date == "2018-04-07" |
+                       date == "2018-07-04" |
+                       date == "2018-07-14" | 
+                       date == "2018-08-04" |
+                       date == "2018-10-21" |
+                       date == "2018-11-22" |
+                       date == "2019-03-09" |
+                       date == "2019-04-06" |
+                       date == "2019-07-04" |
+                       date == "2019-10-20" |
+                       date == "2019-11-28") %>%
+  mutate(race = TRUE)
+races
+
+activities <- activities %>%
+  filter(date == "2016-11-20" | 
+                       date != "2017-11-05" |
+                       date != "2018-04-07" |
+                       date != "2018-07-04" |
+                       date != "2018-07-14" | 
+                       date != "2018-08-04" |
+                       date != "2018-10-21" |
+                       date != "2018-11-22" |
+                       date != "2019-03-09" |
+                       date != "2019-04-06" |
+                       date != "2019-07-04" |
+                       date != "2019-10-20" |
+                       date != "2019-11-28") %>%
+  mutate(race = FALSE)
+
+activities <- rbind(activities, races) %>%
+  arrange(date)
+```
+## The Model
+
+I have been recording my runs in [Strava](https://www.strava.com/) for about five years. I wanted to see if I could use this data to make predictions about my racing pace. I downloaded my data from the website, including a [spreadsheet](https://github.com/jamesphare/running_predictor/blob/master/activities.csv) collecting all my activity data (I've deleted some data from this file for privacy reasons).  
+
+I spent [some time](https://github.com/jamesphare/running_predictor/blob/master/running_project_notebook.md) using visualizations and linear models to determine which variables would provide the most predictive power. I looked into trying to predict both race and non-race paces, and I considered factors including age, distance, elevation gain (both relative and absolute), amount of training, recovery, and season. 
+
+While I have much more data on my overall running than I do on the small number of races that I have run, I found too much variability in my running pace that cannot be explained through these data. Was I taking it easy or doing a workout? Had I eaten breakfast? How hot was it? 
+
+With races, much of this variability no longer applies. In a race, I'm going to try to go as fast as possible and pay attention to proper rest and nutrition, as far as it is under my control.
+
+After trying out various models, I found the model with the most significance and explanatory power was a simple one that only took into account the length of the race and the amount of training I did over the previous twelve weeks.
+
+### Racing Pace Model
+
+```{r pace_model}
+
+mod_pace <- lm(pace ~ Distance + training, races)
+summary(mod_pace)
+```
+
+### Analysis of Variance Table
+
+`r anova(mod_pace)`
+
+### Confidence Intervals
+
+```{r confidence_intervals} 
+confint(mod_pace)
+```
+
+This simple model explains much of the variability in my racing pace with a fairly high degree of confidence. It seems that how much I train for a race does indeed have a direct and measurable impact on my performance. Adjusting for the length of the race, Every kilometer I run in the twelve weeks prior to the race results in an improvement of .17 seconds per kilometer (with a 95% confidence interval beteen .10 and .24 seconds). 
