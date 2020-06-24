@@ -3,9 +3,6 @@ title: "Running Predictor"
 author: "James P. Hare"
 date: "June 24, 2020"
 output:
-  html_document:
-    df_print: paged
-  html_notebook: default
   github_document: default
 ---
 
@@ -116,7 +113,9 @@ summary(mod_pace)
 
 ### Analysis of Variance Table
 
-`r anova(mod_pace)`
+```{r anova} 
+anova(mod_pace)
+```
 
 ### Confidence Intervals
 
