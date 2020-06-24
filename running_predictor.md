@@ -81,5 +81,23 @@ with a fairly high degree of confidence. It seems that how much I train
 for a race does indeed have a direct and measurable impact on my
 performance. Adjusting for the length of the race, Every kilometer I run
 in the twelve weeks prior to the race results in an improvement of .17
-seconds per kilometer (with a 95% confidence interval beteen .10 and .24
-seconds).
+seconds per kilometer (with a 95% confidence interval between .10 and
+.24 seconds).
+
+## The Tool
+
+With this model, it’s a simple task to craft a tool that allows me to
+predict my race pace based on the length of the race and how much I’ve
+trained.
+
+In this case the tool is a [Shiny
+app](https://github.com/jamesphare/running_predictor/blob/master/running_predictor/app.R).
+For now, this app is very simple. The user simply enters the length of
+the race in kilometers and the number of kilometers I’ve trained in the
+preceding twelve weeks, and the app returns a predicted race time in
+kilometers per second.
+
+The next steps are to polish this app, so that it returns minutes and
+seconds and allows toggling between kilometers and miles. It should also
+communicate uncertainty by adding (and perhaps visualizing) confidence
+intervals.
