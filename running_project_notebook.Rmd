@@ -1,8 +1,6 @@
 ---
 title: "Running Project Notebook"
-output:
-  github_document: default
-  html_notebook: default
+output: github_document
 ---
 
 I'd like to see if there are any patterns in my running pace and if so use them to make predictions about my pace in future runs. I have about five years of running data stored in Strava, so I exported this data, deleted some irrelevant, redundant, or personal columns, and will import and clean it up here.
