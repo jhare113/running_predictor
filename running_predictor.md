@@ -78,7 +78,7 @@ previous twelve weeks.
 This simple model explains much of the variability in my racing pace
 with a fairly high degree of confidence. It seems that how much I train
 for a race does indeed have a direct and measurable impact on my
-performance. Adjusting for the length of the race, Every kilometer I run
+performance. Adjusting for the length of the race, every kilometer I run
 in the twelve weeks prior to the race results in an improvement of .17
 seconds per kilometer (with a 95% confidence interval between .10 and
 .24 seconds).
