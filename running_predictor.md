@@ -1,6 +1,6 @@
 Running Predictor
 ================
-June 24, 2020
+June 25, 2020
 
 ## The Model
 
@@ -92,11 +92,8 @@ trained.
 In this case the tool is a [Shiny
 app](https://github.com/jamesphare/running_predictor/blob/master/running_predictor/app.R).
 For now, this app is very simple. The user simply enters the length of
-the race in kilometers and the number of kilometers I’ve trained in the
-preceding twelve weeks, and the app returns a predicted race time in
-kilometers per second.
+the race in either kilometers or miles and the distance I’ve trained in
+the preceding twelve weeks, and the app returns a predicted race time.
 
-The next steps are to polish this app, so that it returns minutes and
-seconds and allows toggling between kilometers and miles. It should also
-communicate uncertainty by adding (and perhaps visualizing) confidence
-intervals.
+The next steps are to enable the app to communicate uncertainty by
+adding (and perhaps visualizing) confidence intervals.
