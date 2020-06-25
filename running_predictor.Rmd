@@ -16,74 +16,87 @@ library(modelr)
 
 # Import the data set
 
-activities <- read_csv("activities.csv",
-                       col_types = cols(
-  `Activity ID` = col_double(),
-  `Activity Date` = col_character(),
-  `Activity Name` = col_character(),
-  `Activity Type` = col_character(),
-  `Elapsed Time` = col_double(),
-  Distance = col_double(),
-  Commute = col_logical(),
-  `Moving Time` = col_double(),
-  `Max Speed` = col_double(),
-  `Elevation Gain` = col_double(),
-  `Elevation Loss` = col_double(),
-  `Elevation Low` = col_double(),
-  `Elevation High` = col_double(),
-  `Max Grade` = col_double(),
-  `Average Grade` = col_double()
-                                )
-                       )
+activities <- read_csv(
+  "activities.csv",
+  col_types = cols(
+    `Activity ID` = col_double(),
+    `Activity Date` = col_character(),
+    `Activity Name` = col_character(),
+    `Activity Type` = col_character(),
+    `Elapsed Time` = col_double(),
+    Distance = col_double(),
+    Commute = col_logical(),
+    `Moving Time` = col_double(),
+    `Max Speed` = col_double(),
+    `Elevation Gain` = col_double(),
+    `Elevation Loss` = col_double(),
+    `Elevation Low` = col_double(),
+    `Elevation High` = col_double(),
+    `Max Grade` = col_double(),
+    `Average Grade` = col_double()
+  )
+)
 
 # Clean the data
 
 activities <- activities %>%
-        filter(`Activity Type` == "Run") %>%
-        mutate(date = mdy_hms(`Activity Date`)) %>%
-        mutate(date = with_tz(date, "America/New_York")) %>%
-        mutate(date = as_date(date)) %>%
-        mutate(pace = `Moving Time` / Distance) %>%
-        filter(pace > 200) %>%
-        filter(Distance > 2) %>%
-        complete(date = seq.Date(min(date), max(date), by="day")) %>%
-        mutate(training = rollapply(Distance, width = list(-85:-1), sum, 
-                                    align = "right", partial = TRUE, 
-                                    na.rm = TRUE, fill = 0))
+  filter(`Activity Type` == "Run") %>%
+  mutate(date = mdy_hms(`Activity Date`)) %>%
+  mutate(date = with_tz(date, "America/New_York")) %>%
+  mutate(date = as_date(date)) %>%
+  mutate(pace = `Moving Time` / Distance) %>%
+  filter(pace > 200) %>%
+  filter(Distance > 2) %>%
+  complete(date = seq.Date(min(date), max(date), by = "day")) %>%
+  mutate(
+    training = rollapply(
+      Distance,
+      width = list(-85:-1),
+      sum,
+      align = "right",
+      partial = TRUE,
+      na.rm = TRUE,
+      fill = 0
+    )
+  )
 
 # Separate out and mark races
 
 races <- activities %>%
-        filter(date == "2016-11-20" | 
-                       date == "2017-11-05" |
-                       date == "2018-04-07" |
-                       date == "2018-07-04" |
-                       date == "2018-07-14" | 
-                       date == "2018-08-04" |
-                       date == "2018-10-21" |
-                       date == "2018-11-22" |
-                       date == "2019-03-09" |
-                       date == "2019-04-06" |
-                       date == "2019-07-04" |
-                       date == "2019-10-20" |
-                       date == "2019-11-28") %>%
+  filter(
+    date == "2016-11-20" |
+      date == "2017-11-05" |
+      date == "2018-04-07" |
+      date == "2018-07-04" |
+      date == "2018-07-14" |
+      date == "2018-08-04" |
+      date == "2018-10-21" |
+      date == "2018-11-22" |
+      date == "2019-03-09" |
+      date == "2019-04-06" |
+      date == "2019-07-04" |
+      date == "2019-10-20" |
+      date == "2019-11-28"
+  ) %>%
   mutate(race = TRUE)
 races
 
 activities <- activities %>%
-  filter(date == "2016-11-20" | 
-                       date != "2017-11-05" |
-                       date != "2018-04-07" |
-                       date != "2018-07-04" |
-                       date != "2018-07-14" | 
-                       date != "2018-08-04" |
-                       date != "2018-10-21" |
-                       date != "2018-11-22" |
-                       date != "2019-03-09" |
-                       date != "2019-04-06" |
-                       date != "2019-07-04" |
-                       date != "2019-10-20" |
-                       date != "2019-11-28") %>%
+  filter(
+    date == "2016-11-20" |
+      date != "2017-11-05" |
+      date != "2018-04-07" |
+      date != "2018-07-04" |
+      date != "2018-07-14" |
+      date != "2018-08-04" |
+      date != "2018-10-21" |
+      date != "2018-11-22" |
+      date != "2019-03-09" |
+      date != "2019-04-06" |
+      date != "2019-07-04" |
+      date != "2019-10-20" |
+      date != "2019-11-28"
+  ) %>%
   mutate(race = FALSE)
 
 activities <- rbind(activities, races) %>%
@@ -104,7 +117,6 @@ After trying out various models, I found the model with the most significance an
 ### Racing Pace Model
 
 ```{r pace_model}
-
 mod_pace <- lm(pace ~ Distance + training, races)
 summary(mod_pace)
 ```
