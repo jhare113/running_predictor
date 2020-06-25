@@ -127,6 +127,6 @@ This simple model explains much of the variability in my racing pace with a fair
 
 With this model, it's a simple task to craft a tool that allows me to predict my race pace based on the length of the race and how much I've trained. 
 
-In this case the tool is a [Shiny app](https://github.com/jamesphare/running_predictor/blob/master/running_predictor/app.R). For now, this app is very simple. The user simply enters the length of the race in either kilometers or miles and the distance I've trained in the preceding twelve weeks, and the app returns a predicted race time.
+In this case the tool is a [Shiny app](https://github.com/jamesphare/running_predictor/blob/master/running_predictor/app.R). For now, this app is very simple. The user simply enters the length of the race in either kilometers or miles and the distance I've trained in the preceding twelve weeks, and the app returns a predicted race time and pace.
 
 The next steps are to enable the app to communicate uncertainty by adding (and perhaps visualizing) confidence intervals.

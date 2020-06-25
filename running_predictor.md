@@ -93,7 +93,8 @@ In this case the tool is a [Shiny
 app](https://github.com/jamesphare/running_predictor/blob/master/running_predictor/app.R).
 For now, this app is very simple. The user simply enters the length of
 the race in either kilometers or miles and the distance I’ve trained in
-the preceding twelve weeks, and the app returns a predicted race time.
+the preceding twelve weeks, and the app returns a predicted race time
+and pace.
 
 The next steps are to enable the app to communicate uncertainty by
 adding (and perhaps visualizing) confidence intervals.
