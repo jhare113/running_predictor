@@ -49,7 +49,7 @@ server <- function(input, output) {
         race_pace <- round(race_pace, 0)
         
         #generate finish time based on pace and distance
-        finish_time <- race_pace * as.numeric(input$distance)
+        finish_time <- round(race_pace * as.numeric(input$distance), 0)
 
         paste("Predicted finish time: ", seconds_to_period(finish_time), 
               sep = "")
