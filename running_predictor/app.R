@@ -1,4 +1,5 @@
 library(shiny)
+library(lubridate)
 
 # Define UI for application 
 ui <- fluidPage(
@@ -19,7 +20,8 @@ ui <- fluidPage(
 
         # Show the predicted race pace
         mainPanel(
-            (textOutput("pace"))
+            textOutput("pace"),
+            textOutput("finish")
     )
 )
 )
@@ -28,14 +30,31 @@ ui <- fluidPage(
 server <- function(input, output) {
     
     output$pace <- renderText({
-    
+        
         # generate pace based on input$distance and input$training from ui.R
         race_pace <- 342.06054 + (2.808069 * as.numeric(input$distance)) - 
             (0.17157 * as.numeric(input$training))
+        race_pace <- round(race_pace, 0)
         
-        paste("Predicted race pace:", round(race_pace, 0), "secs/km")
+        paste("Predicted race pace: ", seconds_to_period(race_pace), 
+              " / km", sep = "")
         
     })
+    
+    output$finish <- renderText({
+        
+        # generate pace based on input$distance and input$training from ui.R
+        race_pace <- 342.06054 + (2.808069 * as.numeric(input$distance)) - 
+            (0.17157 * as.numeric(input$training))
+        race_pace <- round(race_pace, 0)
+        
+        #generate finish time based on pace and distance
+        finish_time <- race_pace * as.numeric(input$distance)
+
+        paste("Predicted finish time: ", seconds_to_period(finish_time), 
+              sep = "")
+    })
+
 }
 
 # Run the application 
