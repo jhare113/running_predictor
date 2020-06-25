@@ -24,11 +24,14 @@ ui <- fluidPage(
 
         # Show the predicted race pace
         mainPanel(
-            textOutput("pace"),
+            tags$h3(
+            textOutput("pace")),
+            tags$h3(
             textOutput("finish")
+            ))
     )
 )
-)
+
 
 # Define server logic required calculate race pace
 server <- function(input, output) {
